@@ -5,11 +5,8 @@ import 'package:q_officer_barantin/main.dart';
 import 'package:q_officer_barantin/services/auth_provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../services/notification_service.dart';
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -17,12 +14,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _iconController;
   bool _isLogoLoaded = false;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AuthProvider>(context, listen: false).checkLoginStatus();
+      Provider.of<AuthProvider>(context, listen: false).runBackgroundSync();
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           setState(() => _isLogoLoaded = true);
@@ -99,9 +96,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             if (!auth.isLoggedIn) {
               return const Center(child: CircularProgressIndicator(color: Color(0xFF8D6E63)));
             }
-
             final userName = auth.userFullName ?? "User";
-
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
@@ -123,14 +118,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         title: 'Pemeriksaan\nLapangan',
                         onTap: () {
                           Navigator.pushNamed(context, '/surat-tugas');
-                        },
-                      ),
-
-                      _buildMenuCard(
-                        icon: 'images/icon_qdc.png',
-                        title: 'Q-Declare',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/q-declare');
                         },
                       ),
                       _buildMenuCard(

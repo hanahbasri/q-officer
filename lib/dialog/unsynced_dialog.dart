@@ -130,7 +130,6 @@ class _UnsyncedDataDialogContentState
             ),
             const SizedBox(height: 12),
 
-            // Pesan Dialog
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(

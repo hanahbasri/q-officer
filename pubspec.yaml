@@ -68,6 +68,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - images/logo_barantin.png
     - images/best_trust.png
     - images/plus_icon.png

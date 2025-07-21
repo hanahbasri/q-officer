@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:q_officer_barantin/main.dart';
 import '../services/notification_provider.dart';
+import 'notification_service.dart';
 
 class NotifHistoryScreen extends StatelessWidget {
   const NotifHistoryScreen({super.key});
@@ -88,14 +89,7 @@ class NotifHistoryScreen extends StatelessWidget {
 
           final Map<String, dynamic>? data = notif['data'] as Map<String, dynamic>?;
 
-          // Deteksi apakah ini notifikasi surat tugas
-          bool isSuratTugas = false;
-          if (data != null && data.containsKey('type') && data['type'] == 'surat_tugas') {
-            isSuratTugas = true;
-          } else if (notif['title'] != null &&
-              notif['title'].toString().toLowerCase().contains('surat tugas')) {
-            isSuratTugas = true;
-          }
+          bool isSuratTugas = NotificationUtils.isSuratTugasNotification(data);
 
           return Dismissible(
             key: Key('notif-${notif['timestamp'] ?? DateTime.now().millisecondsSinceEpoch}-$index'),
@@ -189,7 +183,6 @@ class NotifHistoryScreen extends StatelessWidget {
                     notifProvider.markAsRead(index);
                   }
 
-                  // Navigasi berdasarkan tipe notifikasi
                   if (isSuratTugas) {
                     Navigator.pushNamed(context, '/surat-tugas');
                   } else {

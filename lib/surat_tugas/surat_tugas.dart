@@ -128,7 +128,7 @@ class SuratTugasPageState extends State<SuratTugasPage> with SingleTickerProvide
       List<StLengkap> tempSuratTugasSelesai = [];
       List<StLengkap> allTasksFromDb = [];
 
-      final DateTime today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+      final DateTime _ = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
       for (var itemMap in data) {
         try {
@@ -145,13 +145,11 @@ class SuratTugasPageState extends State<SuratTugasPage> with SingleTickerProvide
 
       for (var tugasItem in allTasksFromDb) {
         String currentDbStatus = tugasItem.status;
-        DateTime? tanggalTugasDateOnly;
         StLengkap currentTugasToProcess = tugasItem;
 
         try {
           if (tugasItem.tanggal.isNotEmpty) {
-            DateTime parsedTanggal = DateTime.parse(tugasItem.tanggal);
-            tanggalTugasDateOnly = DateTime(parsedTanggal.year, parsedTanggal.month, parsedTanggal.day);
+            DateTime.parse(tugasItem.tanggal);
           }
         } catch (e) {
           if (kDebugMode) {
@@ -198,6 +196,7 @@ class SuratTugasPageState extends State<SuratTugasPage> with SingleTickerProvide
           }
         }
 
+        /* // Jika diterapkan bahwa ST Masuk yang di aktifkan akan hilang dalam waktu 7 hari.
         if (currentDbStatus == 'tertunda' || currentDbStatus == 'Proses') {
           bool isExpired = false;
           if (tanggalTugasDateOnly != null) {
@@ -225,7 +224,7 @@ class SuratTugasPageState extends State<SuratTugasPage> with SingleTickerProvide
             }
           }
         }
-
+        */
         if (currentDbStatus == 'dikirim' || currentDbStatus == 'tersimpan_offline') {
           if (tempPrioritasUtama == null) {
             tempPrioritasUtama = currentTugasToProcess;
@@ -657,7 +656,7 @@ class SuratTugasPageState extends State<SuratTugasPage> with SingleTickerProvide
               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF522E2E)),
             ),
             SizedBox(height: 16),
-            Text(_isSyncingApi ? 'Sinkronisasi data dari server...' : 'Memuat data surat tugas...'),
+            Text(_isSyncingApi ? 'Sinkronisasi data..' : 'Memuat data surat tugas...'),
           ],
         ),
       )
@@ -1084,91 +1083,6 @@ class SuratTugasPageState extends State<SuratTugasPage> with SingleTickerProvide
               ],
             ),
             SizedBox(height: 35),
-
-            /*
-            Consumer<AuthProvider>(
-              builder: (context, authProvider, child) {
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : () async {
-                          try {
-                            setState(() {
-                              _isLoading = true;
-                            });
-
-                            final db = DatabaseHelper();
-                            final userNip = authProvider.userId;
-
-                            if (userNip == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Gagal sinkronisasi: NIP pengguna tidak ditemukan.'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                              return;
-                            }
-
-                            await db.syncUnsentData(userNip);
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Data berhasil disinkronkan'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-
-                            await _loadSuratTugas();
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Gagal sinkronisasi: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          } finally {
-                            if (mounted) {
-                              setState(() {
-                                _isLoading = false;
-                              });
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                          backgroundColor: Color(0xFF522E2E),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5))),
-                        ),
-                        child: Text(
-                            _isLoading ? "Mengirim..." : "Sinkronisasi Data",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)
-                        ),
-                      ),
-                      if (kDebugMode) ...[
-                        SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            await DatabaseHelper().deleteDatabaseFile();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Database berhasil dihapus (Mode Debug)')),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          ),
-                          child: Text("Debug: Hapus Database", style: TextStyle(color: Colors.white, fontSize: 12)),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              },
-            ),
-            */
           ],
         ),
       ),

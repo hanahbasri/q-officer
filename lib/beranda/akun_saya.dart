@@ -8,7 +8,6 @@ import 'package:q_officer_barantin/services/auth_provider.dart';
 
 class AkunSayaPage extends StatefulWidget {
   const AkunSayaPage({super.key});
-
   @override
   State<AkunSayaPage> createState() => _AkunSayaPageState();
 }
@@ -219,7 +218,6 @@ class _AkunSayaPageState extends State<AkunSayaPage> {
             ),
             title: Text(title,
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-            // MODIFIED: Removed overflow property to allow text wrapping
             subtitle: Text(
               value.isEmpty ? "-" : value,
               style: const TextStyle(
@@ -375,7 +373,7 @@ class _AkunSayaPageState extends State<AkunSayaPage> {
                         (MediaQuery.of(context).padding.top + 280),
                   ),
                   child: Container(
-                    color: Colors.white, // Original background color
+                    color: Colors.white,
                     padding: const EdgeInsets.only(top: 24, bottom: 24),
                     child: Column(
                       children: [

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart'; // Pastikan ini diimpor
+import 'package:flutter_animate/flutter_animate.dart';
 
-// Fungsi showLocationRangeValidationDialog tetap sama
 Future<bool?> showLocationRangeValidationDialog(
     BuildContext context, {
       required String title,
@@ -55,22 +54,21 @@ class _LocationRangeValidationDialogContent extends StatefulWidget {
 }
 
 class _LocationRangeValidationDialogContentState
-    extends State<_LocationRangeValidationDialogContent> with TickerProviderStateMixin { // Tambahkan TickerProviderStateMixin
+    extends State<_LocationRangeValidationDialogContent> with TickerProviderStateMixin {
 
-  late AnimationController _shakeController; // Controller untuk SlideTransition
+  late AnimationController _shakeController;
 
   @override
   void initState() {
     super.initState();
     _shakeController = AnimationController(
-      vsync: this, // Diperlukan TickerProviderStateMixin
-      duration: const Duration(milliseconds: 300), // Sama seperti di logout_dialog.dart
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
     );
-    _playShakeAnimation(); // Panggil method untuk memulai animasi slide/shake
+    _playShakeAnimation();
   }
 
   void _playShakeAnimation() async {
-    // Mirip dengan logout_dialog.dart
     await Future.delayed(const Duration(milliseconds: 100));
     if (mounted) {
       _shakeController.forward();
@@ -79,7 +77,7 @@ class _LocationRangeValidationDialogContentState
 
   @override
   void dispose() {
-    _shakeController.dispose(); // Jangan lupa dispose controller
+    _shakeController.dispose();
     super.dispose();
   }
 
@@ -98,11 +96,10 @@ class _LocationRangeValidationDialogContentState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Implementasi animasi ikon persis seperti logout_dialog.dart
                 SlideTransition(
                   position: Tween<Offset>(
-                    begin: const Offset(0.05, 0), // Mulai sedikit ke kanan
-                    end: const Offset(-0.05, 0),  // Berakhir sedikit ke kiri (efek "shake" atau pergeseran)
+                    begin: const Offset(0.05, 0),
+                    end: const Offset(-0.05, 0),
                   ).animate(
                     CurvedAnimation(
                       parent: _shakeController,
@@ -110,14 +107,14 @@ class _LocationRangeValidationDialogContentState
                     ),
                   ),
                   child: Icon(
-                    widget.iconData, // Menggunakan ikon dari parameter widget
+                    widget.iconData,
                     size: 60,
-                    color: widget.iconColor, // Menggunakan warna dari parameter widget
+                    color: widget.iconColor,
                   ),
                 )
-                    .animate(onPlay: (controller) => controller.forward()) // Memicu animasi flutter_animate
+                    .animate(onPlay: (controller) => controller.forward())
                     .fadeIn(duration: 300.ms)
-                    .scale(duration: 400.ms), // Efek scale dari flutter_animate
+                    .scale(duration: 400.ms),
 
                 const SizedBox(height: 24),
                 Text(
@@ -130,12 +127,12 @@ class _LocationRangeValidationDialogContentState
                   ),
                 )
                     .animate()
-                    .fadeIn(duration: 400.ms, delay: 200.ms) // Penyesuaian delay jika perlu
+                    .fadeIn(duration: 400.ms, delay: 200.ms)
                     .slideY(
                   begin: 0.5,
                   end: 0,
                   duration: 400.ms,
-                  delay: 200.ms, // Penyesuaian delay jika perlu
+                  delay: 200.ms,
                   curve: Curves.easeOutCubic,
                 ),
 
@@ -151,12 +148,12 @@ class _LocationRangeValidationDialogContentState
                     ),
                   )
                       .animate()
-                      .fadeIn(duration: 400.ms, delay: 300.ms) // Penyesuaian delay jika perlu
+                      .fadeIn(duration: 400.ms, delay: 300.ms)
                       .slideY(
                     begin: 0.5,
                     end: 0,
                     duration: 400.ms,
-                    delay: 300.ms, // Penyesuaian delay jika perlu
+                    delay: 300.ms,
                     curve: Curves.easeOutCubic,
                   ),
                 ),

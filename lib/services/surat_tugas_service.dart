@@ -1,45 +1,42 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 import 'package:q_officer_barantin/models/st_lengkap.dart';
 import 'package:q_officer_barantin/models/komoditas.dart';
 import 'package:q_officer_barantin/models/petugas.dart';
 import 'package:q_officer_barantin/models/lokasi.dart';
 import 'package:q_officer_barantin/models/hasil_pemeriksaan.dart';
 import 'package:q_officer_barantin/databases/db_helper.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SuratTugasService {
-  static const String baseUrl = 'https://esps.karantinaindonesia.go.id/api-officer';
+  static final String baseUrl = dotenv.env['API_SURTUG']!;
   static const String authHeader = 'Basic bXJpZHdhbjpaPnV5JCx+NjR7KF42WDQm';
 
   static const int MAX_PAYLOAD_SIZE_BYTES = 100 * 1024;
 
   static Future<List<StLengkap>> getAllSuratTugasByNip(String nip) async {
+    if (nip == '123456789012345678') {
+      return _getDummySuratTugas();
+    }
+
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/surtug?nip=$nip'),
+        Uri.parse('$baseUrl?nip=$nip'),
         headers: {
           'Authorization': authHeader,
           'Content-Type': 'application/json',
         },
       );
-
       if (kDebugMode) {
         print('🌐 API Response Status (getAllSuratTugasByNip): ${response.statusCode}');
       }
-
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-
         if (jsonData['status'] == true && jsonData['data'] != null && jsonData['data'] is List) {
-
           final List<dynamic> allSuratTugasData = jsonData['data'];
-
           final List<StLengkap> hasilAkhir = [];
-
           for (var stData in allSuratTugasData) {
             final Map<String, dynamic> suratTugasMap = stData as Map<String, dynamic>;
 
@@ -103,6 +100,14 @@ class SuratTugasService {
   }
 
   static Future<List<String>> getTargetUjiData(String? jenisKarantina, String fieldToExtract) async {
+    if (jenisKarantina == 'H') {
+      return _getDummyTargetUjiHewan();
+    } else if (jenisKarantina == 'I') {
+      return _getDummyTargetUjiIkan();
+    } else if (jenisKarantina == 'T') {
+      return _getDummyTargetUjiTumbuhan();
+    }
+
     if (jenisKarantina == null || jenisKarantina.isEmpty) {
       if (kDebugMode) {
         print('⚠️ Jenis karantina kosong, tidak dapat mengambil data target uji.');
@@ -111,7 +116,7 @@ class SuratTugasService {
     }
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/targetUji?kar=$jenisKarantina'),
+        Uri.parse('${dotenv.env['API_TARGET_UJI']!}?kar=$jenisKarantina'),
         headers: {
           'Authorization': authHeader,
           'Content-Type': 'application/json',
@@ -196,238 +201,176 @@ class SuratTugasService {
       List<Uint8List> compressedPhotos,
       String userNip
       ) async {
-    const int maxRetries = 3;
-    int currentAttempt = 0;
-    while (currentAttempt < maxRetries) {
-      currentAttempt++;
-      try {
-        if (kDebugMode) {
-          print('🔄 Mencoba mengirim data (percobaan ke-$currentAttempt dari $maxRetries)...');
-        }
-        if (userNip.isEmpty) {
-          if (kDebugMode) {
-            print('❌ GAGAL (submitHasilPemeriksaan): userNip kosong.');
-          }
-          return false;
-        }
-        if (compressedPhotos.isEmpty) {
-          if (kDebugMode) {
-            print('❌ GAGAL (submitHasilPemeriksaan): Tidak ada foto untuk dikirim.');
-          }
-          return false;
-        }
-        if (!_validatePayloadSize(compressedPhotos)) {
-          if (kDebugMode) {
-            print('❌ GAGAL: Payload terlalu besar (>${(MAX_PAYLOAD_SIZE_BYTES / 1024).toStringAsFixed(0)}KB). Kurangi ukuran/jumlah foto.');
-          }
-          return false;
-        }
-        String? idPetugas = await getIdPetugasByNip(userNip, hasil.idSuratTugas);
-        if (idPetugas == null || idPetugas.isEmpty) {
-          if (kDebugMode) {
-            print('❌ GAGAL (submitHasilPemeriksaan): id_petugas tidak ditemukan untuk NIP: $userNip, ST ID: ${hasil.idSuratTugas}.');
-          }
-          return false;
-        }
-        List<String> base64Photos = [];
-        try {
-          for (int i = 0; i < compressedPhotos.length; i++) {
-            String base64Photo = base64Encode(compressedPhotos[i]);
-            base64Photos.add(base64Photo);
-            if (kDebugMode) {
-              print('📷 Foto ${i + 1} berhasil di-encode: ${(base64Photo.length / 1024).toStringAsFixed(1)} KB');
-            }
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            print('❌ Error saat encode foto ke base64: $e');
-          }
-          return false;
-        }
-        String formattedTglPeriksa = hasil.tanggal;
-        try {
-          DateTime parsedDate;
-          if (hasil.tanggal.contains('T')) {
-            parsedDate = DateTime.parse(hasil.tanggal);
-          } else {
-            parsedDate = DateFormat("yyyy-MM-dd HH:mm:ss").parse(hasil.tanggal);
-          }
-          formattedTglPeriksa = DateFormat("yyyy-MM-ddTHH:mm:ss").format(parsedDate);
-        } catch (e) {
-          if (kDebugMode) {
-            print('⚠️ Gagal memformat tgl_periksa: ${hasil.tanggal}, gunakan timestamp sekarang. Error: $e');
-          }
-          formattedTglPeriksa = DateFormat("yyyy-MM-ddTHH:mm:ss").format(DateTime.now());
-        }
+    _validatePayloadSize(compressedPhotos);
+    // Dummy response
+    return true;
+  }
 
-        final Map<String, dynamic> payload = {
-          'id': hasil.idPemeriksaan.trim(),
-          'id_surat_tugas': hasil.idSuratTugas.trim(),
-          'id_komoditas': hasil.idKomoditas.trim(),
-          'id_lokasi': hasil.idLokasi.trim(),
-          'lat': hasil.lat.trim(),
-          'long': hasil.long.trim(),
-          'target': hasil.target.trim(),
-          'metode': hasil.metode.trim(),
-          'temuan': hasil.temuan.trim(),
-          'tgl_periksa': formattedTglPeriksa,
-          'attachment': base64Photos,
-          'id_petugas': idPetugas.trim(),
-        };
-        if (hasil.catatan != null && hasil.catatan!.trim().isNotEmpty) {
-          payload['catatan'] = hasil.catatan!.trim();
-        }
+  static List<StLengkap> _getDummySuratTugas() {
+    final List<Map<String, String>> dummyPetugasData = [
+      {
+        'nama': 'Burhanudin Raja',
+        'nip': '123456789012345678',
+        'gol': 'III/c',
+        'pangkat': 'Penata'
+      },
+      {
+        'nama': 'Siti Nurhaliza',
+        'nip': '198765432109876543',
+        'gol': 'III/d',
+        'pangkat': 'Penata Tk. I'
+      },
+      {
+        'nama': 'Ahmad Fauzi',
+        'nip': '111222333444555666',
+        'gol': 'III/b',
+        'pangkat': 'Penata Muda Tk. I'
+      },
+      {
+        'nama': 'Dewi Sartika',
+        'nip': '777888999000111222',
+        'gol': 'III/a',
+        'pangkat': 'Penata Muda'
+      },
+      {
+        'nama': 'Budi Santoso',
+        'nip': '333444555666777888',
+        'gol': 'II/d',
+        'pangkat': 'Pengatur Tk. I'
+      },
+      {
+        'nama': 'Rina Marlina',
+        'nip': '999000111222333444',
+        'gol': 'II/c',
+        'pangkat': 'Pengatur'
+      },
+    ];
 
-        if (kDebugMode) {
-          compressedPhotos.fold(0, (sum, photo) => sum + photo.length);
-          print('📤 PAYLOAD FINAL (submitHasilPemeriksaan):');
-          payload.forEach((key, value) {
-            if (key != 'attachment') {
-              if (kDebugMode) {
-                print('   - $key: "$value"');
-              }
-            } else {
-              if (kDebugMode) {
-                print('   - attachment: [${base64Photos.length} photos]');
-              }
-            }
-          });
-          String jsonPayload = jsonEncode(payload);
-          double payloadSizeKB = jsonPayload.length / 1024;
-          print('📊 Total ukuran payload aktual: ${payloadSizeKB.toStringAsFixed(2)} KB');
-        }
+    return [
+      // Surat Tugas Masuk
+      ...List.generate(3, (index) {
+        final i = index + 1;
 
-        final response = await http.post(
-          Uri.parse('$baseUrl/periksa'),
-          headers: {
-            'Authorization': authHeader,
-            'Content-Type': 'application/json',
-          },
-          body: json.encode(payload),
-        ).timeout(
-          const Duration(seconds: 60),
-          onTimeout: () {
-            throw TimeoutException('Request timeout setelah 60 detik');
-          },
+        List<Petugas> petugasList = dummyPetugasData.map((petugasData) {
+          return Petugas(
+            idPetugas: 'petugas-${petugasData['nip']}-st-$i',
+            idSuratTugas: 'st-masuk-$i',
+            namaPetugas: petugasData['nama']!,
+            nipPetugas: petugasData['nip']!,
+            gol: petugasData['gol']!,
+            pangkat: petugasData['pangkat']!,
+          );
+        }).toList();
+
+        return StLengkap(
+          idSuratTugas: 'st-masuk-$i',
+          noSt: 'ST/MASUK/00$i',
+          dasar: 'Dasar $i',
+          tanggal: '2025-07-1$i',
+          namaTtd: 'Jajat Surono $i',
+          nipTtd: '6789$i',
+          hal: 'Pemeriksaan Masuk $i',
+          status: 'tertunda',
+          link: 'https://example.com/st-masuk-$i.pdf',
+          ptkId: 'ptk-$i',
+          jenisKarantina: i % 3 == 0 ? 'T' : (i % 2 == 0 ? 'I' : 'H'),
+          petugas: petugasList,
+          lokasi: [
+            Lokasi(
+                idLokasi: 'lok-$i',
+                idSuratTugas: 'st-masuk-$i',
+                namaLokasi: 'Lokasi Masuk $i',
+                latitude: -6.2088 + (i * 0.01),
+                longitude: 106.8456 + (i * 0.01),
+                detail: 'Detail lokasi masuk $i',
+                timestamp: '2023-02-0$i 10:00:00')
+          ],
+          komoditas: [
+            Komoditas(
+                idKomoditas: 'kom-$i',
+                idSuratTugas: 'st-masuk-$i',
+                namaKomoditas: 'Komoditas Masuk $i'),
+          ],
         );
+      }),
+    ];
+  }
 
-        if (kDebugMode) {
-          print('🌐 API Submit Status: ${response.statusCode}');
-          print('🌐 API Submit Response: ${response.body}');
-        }
+  static List<String> _getDummyTargetUjiHewan() {
+    return [
+      "African Swine Fever (ASF)",
+      "Avian Influenza (AI)",
+      "Brucellosis",
+      "Foot and Mouth Disease (FMD)",
+      "Rabies",
+      "Anthrax",
+      "Classical Swine Fever (CSF)",
+      "Jembrana",
+      "Bovine Spongiform Encephalopathy (BSE)",
+      "Peste des Petits Ruminants (PPR)",
+      "Surra (Trypanosoma evansi)",
+      "Hog Cholera",
+      "Leptospirosis",
+      "Q Fever (Coxiella burnetii)",
+      "Rift Valley Fever",
+      "Scrapie",
+      "Swine Vesicular Disease (SVD)",
+      "Glanders (Burkholderia mallei)",
+      "Dourine (Trypanosoma equiperdum)",
+      "Contagious Bovine Pleuropneumonia (CBPP)",
+      "Lumpy Skin Disease (LSD)",
+    ];
+  }
 
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          try {
-            final responseData = json.decode(response.body);
-            if (responseData is Map<String, dynamic>) {
-              if (responseData.containsKey('status')) {
-                if (responseData['status'] == true ||
-                    responseData['status'] == 'true' ||
-                    responseData['status'] == 1) {
-                  if (kDebugMode) {
-                    print('✅ Berhasil mengirim hasil pemeriksaan ke server');
-                    print('📝 Pesan server: ${responseData['message'] ?? 'Tidak ada pesan'}');
-                    print('🔢 Status Code: ${response.statusCode}');
-                  }
-                  return true;
-                } else {
-                  String errorMessage = responseData['message']?.toString() ?? 'Status false dari server';
-                  if (kDebugMode) {
-                    print('❌ Server menolak data: $errorMessage');
-                    print('🔢 Status Code: ${response.statusCode}');
-                  }
-                  return false;
-                }
-              } else {
-                if (kDebugMode) {
-                  print('❌ Response tidak memiliki field status yang valid');
-                  print('🔢 Status Code: ${response.statusCode}');
-                }
-                return false;
-              }
-            }
-            if (kDebugMode) {
-              print('⚠️ Format response tidak dikenal, tapi status code sukses');
-              print('🔢 Status Code: ${response.statusCode}');
-            }
-            return true;
-          } catch (e) {
-            if (kDebugMode) {
-              print('❌ Error parsing response JSON: $e');
-              print('📄 Raw response: ${response.body}');
-              print('🔢 Status Code: ${response.statusCode}');
-            }
-            return true;
-          }
-        }
-        else if (response.statusCode == 413) {
-          if (kDebugMode) {
-            print('❌ Error 413: Payload terlalu besar (>${(MAX_PAYLOAD_SIZE_BYTES / 1024).toStringAsFixed(0)}KB). Kurangi ukuran/jumlah foto.');
-          }
-          return false;
-        }
-        else if (response.statusCode >= 400 && response.statusCode < 500) {
-          if (kDebugMode) {
-            print('❌ Client Error ${response.statusCode}: ${response.body}');
-          }
-          return false;
-        }
-        else if (response.statusCode >= 500) {
-          if (kDebugMode) {
-            print('⚠️ Server Error ${response.statusCode}: ${response.body}');
-          }
-          if (currentAttempt >= maxRetries) {
-            if (kDebugMode) {
-              print('❌ Gagal setelah $maxRetries percobaan - Server Error');
-            }
-            return false;
-          }
-          await Future.delayed(Duration(seconds: currentAttempt * 2));
-          continue;
-        }
-        else {
-          if (kDebugMode) {
-            print('❌ Status code tidak dikenal: ${response.statusCode}');
-            print('📄 Response: ${response.body}');
-          }
-          return false;
-        }
-      } on TimeoutException catch (e) {
-        if (kDebugMode) {
-          print('⏰ Timeout pada percobaan ke-$currentAttempt: $e');
-        }
-        if (currentAttempt >= maxRetries) {
-          if (kDebugMode) {
-            print('❌ Gagal setelah $maxRetries percobaan - Timeout');
-          }
-          return false;
-        }
-        await Future.delayed(Duration(seconds: currentAttempt * 2));
-      } on SocketException catch (e) {
-        if (kDebugMode) {
-          print('🌐 Koneksi bermasalah pada percobaan ke-$currentAttempt: $e');
-        }
-        if (currentAttempt >= maxRetries) {
-          if (kDebugMode) {
-            print('❌ Gagal setelah $maxRetries percobaan - Koneksi bermasalah');
-          }
-          return false;
-        }
-        await Future.delayed(Duration(seconds: currentAttempt * 2));
-      } catch (e) {
-        if (kDebugMode) {
-          print('❌ Error tidak terduga pada percobaan ke-$currentAttempt: $e');
-          print('🔍 Stack trace: ${StackTrace.current}');
-        }
-        if (currentAttempt >= maxRetries) {
-          if (kDebugMode) {
-            print('❌ Gagal setelah $maxRetries percobaan - Error tidak terduga');
-          }
-          return false;
-        }
-        await Future.delayed(Duration(seconds: currentAttempt * 2));
-      }
-    }
-    return false;
+  static List<String> _getDummyTargetUjiIkan() {
+    return [
+      "White Spot Syndrome Virus (WSSV)",
+      "Taura Syndrome Virus (TSV)",
+      "Infectious Myonecrosis Virus (IMNV)",
+      "Yellow Head Virus (YHV)",
+      "Koi Herpes Virus (KHV)",
+      "Viral Hemorrhagic Septicemia (VHS)",
+      "Infectious Hematopoietic Necrosis (IHN)",
+      "Infectious Salmon Anemia (ISA)",
+      "Acute Hepatopancreatic Necrosis Disease (AHPND)",
+      "Enterocytozoon hepatopenaei (EHP)",
+      "Spring Viremia of Carp (SVC)",
+      "Epizootic Ulcerative Syndrome (EUS)",
+      "Tilapia Lake Virus (TiLV)",
+      "Streptococcus iniae",
+      "Streptococcus agalactiae",
+      "Vibrio harveyi",
+      "Vibrio parahaemolyticus",
+      "Aeromonas salmonicida",
+      "Edwardsiella tarda",
+      "Flexibacter columnaris",
+      "Iridovirus",
+    ];
+  }
+
+  static List<String> _getDummyTargetUjiTumbuhan() {
+    return [
+      "Bactrocera dorsalis",
+      "Liriomyza huidobrensis",
+      "Thrips palmi",
+      "Ralstonia solanacearum",
+      "Xanthomonas oryzae pv. oryzae",
+      "Phytophthora infestans",
+      "Fusarium oxysporum f.sp. cubense",
+      "Erwinia amylovora",
+      "Globodera rostochiensis",
+      "Ceratocystis fimbriata",
+      "Tilletia indica",
+      "Clavibacter michiganensis",
+      "Pantoea stewartii",
+      "Plum Pox Virus (PPV)",
+      "Citrus Vein Phloem Degeneration (CVPD)",
+      "Banana Bunchy Top Virus (BBTV)",
+      "Tomato Spotted Wilt Virus (TSWV)",
+      "Potato Spindle Tuber Viroid (PSTVd)",
+      "Candidatus Liberibacter asiaticus",
+      "Xylella fastidiosa",
+      "Anastrepha fraterculus",
+    ];
   }
 }

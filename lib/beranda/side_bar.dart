@@ -45,7 +45,7 @@ class SideBar extends StatelessWidget {
             textColor: darkerText,
             onTap: () {
               if (Scaffold.of(context).isDrawerOpen) {
-                Navigator.pop(context); // Close drawer
+                Navigator.pop(context);
               }
               Navigator.push(
                 context,
@@ -59,7 +59,6 @@ class SideBar extends StatelessWidget {
             iconColor: darkerText,
             textColor: darkerText,
             onTap: () {
-              // context here is from SideBar's build method
               _showTutorialOptions(context);
             },
           ),
@@ -71,13 +70,13 @@ class SideBar extends StatelessWidget {
     );
   }
 
-  void _showTutorialOptions(BuildContext outerContext) { // outerContext is from SideBar
+  void _showTutorialOptions(BuildContext outerContext) {
     showModalBottomSheet(
       context: outerContext,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (BuildContext bottomSheetContext) { // bottomSheetContext is for the sheet's content
+      builder: (BuildContext bottomSheetContext) {
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           child: Column(
@@ -98,21 +97,16 @@ class SideBar extends StatelessWidget {
                 description: "Tutorial tentang halaman detail surat tugas masuk yang belum diterima",
                 icon: Icons.assignment_outlined,
                 onTap: () async {
-                  Navigator.pop(bottomSheetContext); // Pop the bottom sheet first
-
-                  // Then, close the drawer if it's open
+                  Navigator.pop(bottomSheetContext);
                   if (outerContext.mounted && Scaffold.of(outerContext).isDrawerOpen) {
                     Navigator.pop(outerContext);
                   }
-                  // Ensure a small delay for the drawer to close before showing SnackBar or navigating
                   await Future.delayed(const Duration(milliseconds: 100));
-
 
                   try {
                     final db = DatabaseHelper();
                     final data = await db.getData('Surat_Tugas');
                     StLengkap? suratTugasTertunda;
-
                     for (var item in data) {
                       final status = item['status'] ?? '';
                       if (status == 'tertunda' || status == 'Proses') {
@@ -175,13 +169,12 @@ class SideBar extends StatelessWidget {
                 description: "Tutorial halaman detail laporan untuk surat tugas yang sudah memiliki hasil pemeriksaan.",
                 icon: Icons.assignment_turned_in_outlined,
                 onTap: () async {
-                  Navigator.pop(bottomSheetContext); // Pop the bottom sheet
+                  Navigator.pop(bottomSheetContext);
 
                   if (outerContext.mounted && Scaffold.of(outerContext).isDrawerOpen) {
-                    Navigator.pop(outerContext); // Close the drawer
+                    Navigator.pop(outerContext);
                   }
                   await Future.delayed(const Duration(milliseconds: 100));
-
 
                   try {
                     final db = DatabaseHelper();
@@ -191,7 +184,7 @@ class SideBar extends StatelessWidget {
                     for (var item in data) {
                       final status = item['status'] ?? '';
                       if (status == 'dikirim' || status == 'tersimpan_offline') {
-                        final hasilPemeriksaan = await db.getPeriksaById(item['id_surat_tugas']);
+                        final hasilPemeriksaan = await db.getHasilPemeriksaanById(item['id_surat_tugas']);
                         if (hasilPemeriksaan.isNotEmpty) {
                           final futures = await Future.wait([
                             db.getPetugasById(item['id_surat_tugas']),
@@ -216,7 +209,7 @@ class SideBar extends StatelessWidget {
                           builder: (context) => DetailLaporan(
                             suratTugas: suratTugasUntukTutorial!,
                             idSuratTugas: suratTugasUntukTutorial.idSuratTugas,
-                            onSelesaiTugas: () { /* Kosongkan untuk mode tutorial */ },
+                            onSelesaiTugas: () {/*tidak ada action karena tutorial mode*/},
                             isViewOnly: false,
                             showDetailHasil: true,
                             showTutorialImmediately: true,
@@ -243,29 +236,27 @@ class SideBar extends StatelessWidget {
                   }
                 },
               ),
+
               const SizedBox(height: 10),
               _TutorialOptionItem(
                 title: "Detail Surat Tugas Selesai",
                 description: "Tutorial halaman detail untuk surat tugas yang telah selesai.",
                 icon: Icons.task_alt_outlined,
                 onTap: () async {
-                  Navigator.pop(bottomSheetContext); // Pop the bottom sheet
-
+                  Navigator.pop(bottomSheetContext);
                   if (outerContext.mounted && Scaffold.of(outerContext).isDrawerOpen) {
-                    Navigator.pop(outerContext); // Close the drawer
+                    Navigator.pop(outerContext);
                   }
                   await Future.delayed(const Duration(milliseconds: 100));
-
 
                   try {
                     final db = DatabaseHelper();
                     final data = await db.getData('Surat_Tugas');
                     StLengkap? suratTugasSelesaiUntukTutorial;
-
                     for (var item in data) {
                       final status = item['status'] ?? '';
                       if (status == 'selesai') {
-                        final hasilPemeriksaan = await db.getPeriksaById(item['id_surat_tugas']);
+                        final hasilPemeriksaan = await db.getHasilPemeriksaanById(item['id_surat_tugas']);
                         if (hasilPemeriksaan.isNotEmpty) {
                           final futures = await Future.wait([
                             db.getPetugasById(item['id_surat_tugas']),
@@ -290,7 +281,7 @@ class SideBar extends StatelessWidget {
                           builder: (context) => DetailLaporan(
                             suratTugas: suratTugasSelesaiUntukTutorial!,
                             idSuratTugas: suratTugasSelesaiUntukTutorial.idSuratTugas,
-                            onSelesaiTugas: () { /* Kosongkan untuk mode tutorial */ },
+                            onSelesaiTugas: () { /* tidak ada action karena tutorial mode */ },
                             isViewOnly: true,
                             showDetailHasil: true,
                             customTitle: "Surat Tugas Selesai",
@@ -404,7 +395,6 @@ class _SidebarHeader extends StatelessWidget {
   final String nama;
   final String nip;
   final AuthProvider authProvider;
-
   const _SidebarHeader({
     required this.nama,
     required this.nip,

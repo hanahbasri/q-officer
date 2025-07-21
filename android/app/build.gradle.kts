@@ -5,25 +5,27 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("androidx.core:core-ktx:1.10.1")
+    }
+}
+
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
-
-    // ✅ Firebase Analytics (tanpa versi, karena pakai BoM)
     implementation("com.google.firebase:firebase-analytics")
-
-    // ✅ FIX: Desugar libs harus pakai `coreLibraryDesugaring`
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5") // ✅
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 
 android {
     namespace = "com.example.q_officer_barantin"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-        isCoreLibraryDesugaringEnabled = true// ✅ pakai `= true`
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -36,6 +38,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
     }
 
     buildTypes {

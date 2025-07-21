@@ -691,7 +691,6 @@ class FormPeriksaState extends State<FormPeriksa> with SingleTickerProviderState
           color: img.ColorRgba8(0, 0, 0, 180),
         );
 
-        // Teks utama (putih)
         img.drawString(
           originalImage,
           displayText,
@@ -707,7 +706,7 @@ class FormPeriksaState extends State<FormPeriksa> with SingleTickerProviderState
       return Uint8List.fromList(img.encodeJpg(originalImage, quality: 92));
     } catch (e) {
       if (kDebugMode) print('❌ Error adding timestamp: $e');
-      return imageBytes; // Kembalikan gambar asli jika ada error
+      return imageBytes;
     }
   }
 
@@ -1797,7 +1796,7 @@ class FormPeriksaState extends State<FormPeriksa> with SingleTickerProviderState
       ),
     );
   }
-} // <-- Kurung kurawal penutup untuk class FormPeriksaState
+}
 
 Widget _buildImageSourceOption({
   required IconData icon,

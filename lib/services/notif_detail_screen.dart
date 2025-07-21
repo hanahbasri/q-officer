@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'notification_service.dart';
+
 class NotifDetailScreen extends StatelessWidget {
   const NotifDetailScreen({super.key});
 
@@ -28,13 +30,7 @@ class NotifDetailScreen extends StatelessWidget {
     )
         : '';
 
-    // Cek apakah ini adalah notifikasi surat tugas
-    bool isSuratTugas = false;
-    if (data != null && data.containsKey('type') && data['type'] == 'surat_tugas') {
-      isSuratTugas = true;
-    } else if (title.toLowerCase().contains('surat tugas')) {
-      isSuratTugas = true;
-    }
+    bool isSuratTugas = NotificationUtils.isSuratTugasNotification(data);
 
     return Scaffold(
       appBar: AppBar(

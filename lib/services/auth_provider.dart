@@ -5,10 +5,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:q_officer_barantin/models/role_detail.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:q_officer_barantin/databases/db_helper.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:q_officer_barantin/services/surat_tugas_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthKeys {
   static const authToken = "auth_token";
@@ -66,10 +66,10 @@ class AuthProvider with ChangeNotifier {
             _uptDataMap[uptId] = uptNamaResmi;
           }
         }
-        debugPrint("✅ Data UPT berhasil dimuat dan diparsing. Total: ${_uptDataMap.length} UPT.");
+        debugPrint("Data UPT berhasil dimuat dan diparsing. Total: ${_uptDataMap.length} UPT.");
       }
     } catch (e) {
-      debugPrint("❌ Error saat memuat atau parsing data UPT: $e");
+      debugPrint("Error saat memuat atau parsing data UPT: $e");
     }
   }
 
@@ -128,10 +128,51 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+
   Future<bool> login(String username, String password) async {
+    if (username == 'petugas1' && password == '12345678') {
+      accessToken = 'dummy_token';
+      uid = 'dummy_uid';
+      userName = 'petugas1';
+      userFullName = 'Burhanudin Raja';
+      userId = '2394867';
+      nip = '123456789012345678';
+      userEmail = 'petugas1@dummy.com';
+      nik = '1234567890123456';
+      idPegawai = '2003';
+      upt = '1100';
+      await _resolveUserUptName();
+      userRoles = [
+        RoleDetail(
+          rolesId: '001',
+          appsId: '200001',
+          roleName: 'Petugas Lapangan',
+        ),
+      ];
+
+      await _secureStorage.write(key: AuthKeys.authToken, value: accessToken);
+      await _secureStorage.write(key: AuthKeys.uid, value: uid);
+      await _secureStorage.write(key: AuthKeys.username, value: userName);
+      await _secureStorage.write(key: AuthKeys.userId, value: userId);
+      await _secureStorage.write(key: AuthKeys.nip, value: nip);
+      await _secureStorage.write(key: AuthKeys.fullName, value: userFullName);
+      await _secureStorage.write(key: AuthKeys.email, value: userEmail);
+      await _secureStorage.write(key: AuthKeys.nik, value: nik);
+      await _secureStorage.write(key: AuthKeys.idPegawai, value: idPegawai);
+      await _secureStorage.write(key: AuthKeys.upt, value: upt);
+      await _secureStorage.write(
+          key: AuthKeys.userRoles,
+          value: jsonEncode(userRoles.map((e) => e.toJson()).toList()));
+      _userPhotoPath = await _secureStorage.read(key: AuthKeys.userPhotoPath);
+      _isLoggedIn = true;
+      await sendFcmTokenToServer();
+      notifyListeners();
+      return true;
+    }
+
     try {
       final response = await http.post(
-        Uri.parse('https://api.karantinaindonesia.go.id/ums/login'),
+        Uri.parse(dotenv.env['API_LOGIN']!),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({"username": username, "password": password}),
       );
@@ -150,7 +191,6 @@ class AuthProvider with ChangeNotifier {
           nik = userData["nik"];
           idPegawai = userData["idpegawai"];
           upt = userData["upt"]?.toString();
-          await _resolveUserUptName();
           final detilList = userData["detil"];
           if (detilList is List) {
             userRoles = detilList
@@ -175,17 +215,6 @@ class AuthProvider with ChangeNotifier {
           await _secureStorage.write(key: AuthKeys.userRoles, value: jsonEncode(detilList));
           _userPhotoPath = await _secureStorage.read(key: AuthKeys.userPhotoPath);
           _isLoggedIn = true;
-          if (nip != null && nip!.isNotEmpty) {
-            try {
-              final dbHelper = DatabaseHelper();
-              await dbHelper.syncSuratTugasFromApi(nip!);
-              debugPrint("✅ Surat tugas berhasil disync setelah login dengan NIP: $nip");
-              _precacheMasterData();
-            } catch (e) {
-              debugPrint("❌ Error sync surat tugas setelah login: $e");
-            }
-          }
-          await sendFcmTokenToServer();
           notifyListeners();
           return true;
         }
@@ -200,76 +229,29 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> sendFcmTokenToServer() async {
-    try {
-      final fcmToken = await FirebaseMessaging.instance.getToken();
-      if (fcmToken == null || fcmToken.isEmpty) {
-        debugPrint("❌ FCM token tidak tersedia atau kosong");
-        return;
+  Future<void> runBackgroundSync() async {
+    if (nip != null && nip!.isNotEmpty) {
+      try {
+        debugPrint("Memulai sinkronisasi data...");
+        final dbHelper = DatabaseHelper();
+        await dbHelper.syncSuratTugasFromApi(nip!);
+        await _precacheMasterData();
+        debugPrint("Sinkronisasi data selesai.");
+      } catch (e) {
+        debugPrint("❌ [Background Sync] Error: $e");
       }
-      debugPrint("📲 Mengirim FCM token ke server: $fcmToken");
-      debugPrint("🔍 FCM Token length: ${fcmToken.length}");
-      if (nip == null || nip!.isEmpty) {
-        debugPrint("❌ NIP tidak tersedia");
-        return;
-      }
-      final requestBody = <String, dynamic>{
-        "uid": uid!.trim(),
-        "uname": (userName ?? "").trim(),
-        "nama": (userFullName ?? "").trim(),
-        "nip": nip!.trim(),
-        "nik": (nik ?? "").trim(),
-        "email": (userEmail ?? "").trim(),
-        "idpegawai": int.tryParse(idPegawai?.toString() ?? "0") ?? 0,
-        "upt": int.tryParse(upt?.toString() ?? "1000") ?? 1000,
-        "token": fcmToken.trim(),
-      };
-      debugPrint("📤 FCM request body: ${json.encode(requestBody)}");
-      debugPrint("🔍 Data validation:");
-      debugPrint("   - uid: '${requestBody['uid']}'");
-      debugPrint("   - nip: '${requestBody['nip']}'");
-      debugPrint("   - token length: ${fcmToken.trim().length}");
-      final response = await http.post(
-        Uri.parse('https://esps.karantinaindonesia.go.id/api-officer/tokenFCM'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic bXJpZHdhbjpaPnV5JCx+NjR7KF42WDQm',
-          'Accept': 'application/json',
-        },
-        body: json.encode(requestBody),
-      );
-      debugPrint("🌐 FCM Response Status: ${response.statusCode}");
-      debugPrint("🌐 FCM Response Body: ${response.body}");
-      if (response.statusCode == 200) {
-        try {
-          final responseData = json.decode(response.body) as Map<String, dynamic>;
-          if (responseData['status'] == true) {
-            debugPrint("✅ FCM token berhasil dikirim ke server");
-          } else {
-            debugPrint("❌ FCM token gagal: ${responseData['message']}");
-          }
-        } catch (e) {
-          debugPrint("❌ Error parsing response: $e");
-          debugPrint("🔍 Raw response: ${response.body}");
-        }
-      } else {
-        debugPrint("❌ FCM request failed with status: ${response.statusCode}");
-        debugPrint("🔍 Response: ${response.body}");
-      }
-    } on SocketException {
-      debugPrint("❌ Tidak ada koneksi internet saat mengirim FCM token");
-    } catch (e) {
-      debugPrint("❌ Error saat mengirim FCM token ke server: $e");
-      debugPrint("🔍 Error type: ${e.runtimeType}");
     }
+  }
+
+  Future<void> sendFcmTokenToServer() async {
+    debugPrint("Pengiriman FCM Token dinonaktifkan untuk versi dummy.");
+    return;
   }
 
   Future<void> _precacheMasterData() async {
     final dbHelper = DatabaseHelper();
     final List<String> quarantineTypes = ['H', 'T', 'I'];
-
     debugPrint("🔥 Memulai precaching data master Target/Temuan...");
-
     for (String type in quarantineTypes) {
       try {
         final apiData = await SuratTugasService.getTargetUjiData(type, 'uraian');
@@ -309,7 +291,6 @@ class AuthProvider with ChangeNotifier {
       } else {
         _userPhotoPath = null;
       }
-      debugPrint("✅ Logout berhasil untuk user yang keluar");
       notifyListeners();
     } catch (e) {
       debugPrint("❌ Logout error: $e");

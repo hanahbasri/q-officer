@@ -29,7 +29,7 @@
         android:resource="@drawable/logo_barantin" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBXR4dJ5G4rxG3wt_DfRpQmbNtD03YBD60" /> <service
+            android:value="AIzaSyAOqHr1L_I3evWfN5iRJLgEZvyB2jcjjzE" /> <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             android:exported="false" tools:replace="android:exported"> <intent-filter>
             <action android:name="com.google.firebase.MESSAGING_EVENT"/>

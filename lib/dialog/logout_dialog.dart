@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:q_officer_barantin/main.dart';
 import 'package:q_officer_barantin/services/auth_provider.dart';
-
-const Color darkBrown = Color(0xFF522E2E);
 
 Future<Future<Object?>> showAnimatedLogoutDialog(BuildContext context) async {
   return showGeneralDialog(
@@ -85,7 +84,7 @@ class _LogoutDialogContentState extends State<_LogoutDialogContent> with TickerP
               child: Icon(
                 Icons.logout_rounded,
                 size: 60,
-                color: darkBrown,
+                color: MyApp.karantinaBrown,
               ),
             )
                 .animate(onPlay: (controller) => controller.forward())
@@ -99,7 +98,7 @@ class _LogoutDialogContentState extends State<_LogoutDialogContent> with TickerP
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: darkBrown,
+                color: MyApp.karantinaBrown,
               ),
             )
                 .animate()
@@ -182,12 +181,9 @@ class _LogoutDialogContentState extends State<_LogoutDialogContent> with TickerP
     setState(() {
       _isLoading = true;
     });
-
     await Future.delayed(const Duration(milliseconds: 800));
-
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.logout();
-
     if (mounted) {
       Navigator.of(context).pop();
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
@@ -197,9 +193,7 @@ class _LogoutDialogContentState extends State<_LogoutDialogContent> with TickerP
 
 class AnimatedLogoutButton extends StatefulWidget {
   final VoidCallback onTap;
-
   const AnimatedLogoutButton({super.key, required this.onTap});
-
   @override
   State<AnimatedLogoutButton> createState() => _AnimatedLogoutButtonState();
 }

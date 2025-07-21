@@ -1216,7 +1216,7 @@ Widget buildLaporanFooter({
                         apiSuccess = await HistoryApiService.sendTaskStatusUpdate(
                           context: context,
                           idSuratTugas: suratTugas.idSuratTugas,
-                          status: "selesai", // Status untuk API
+                          status: "selesai",
                           keterangan: "Petugas telah menyelesaikan surat tugas.",
                         );
                       } catch (e) {

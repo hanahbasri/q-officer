@@ -4,13 +4,10 @@ import 'package:sqflite/sqflite.dart';
 
 class ProfileDB {
   static Database? _database;
-
   static Future<Database> getDatabase() async {
     if (_database != null) return _database!;
-
     final dir = await getApplicationDocumentsDirectory();
     final dbPath = join(dir.path, 'profile.db');
-
     _database = await openDatabase(
       dbPath,
       version: 1,
@@ -23,7 +20,6 @@ class ProfileDB {
         ''');
       },
     );
-
     return _database!;
   }
 

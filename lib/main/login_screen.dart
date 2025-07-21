@@ -2,11 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:q_officer_barantin/beranda/home_screen.dart';
-import 'services/auth_provider.dart';
+import '../services/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   @override
   LoginScreenState createState() => LoginScreenState();
 }
@@ -15,10 +14,8 @@ class LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final String _errorMessage = "Username atau kata sandi tidak valid\nSilakan coba lagi";
-
   bool _obscurePassword = true;
   bool _isLoading = false;
-
   void _togglePasswordVisibility() {
     setState(() {
       _obscurePassword = !_obscurePassword;
@@ -27,25 +24,19 @@ class LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!mounted) return;
-
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
-
     if (username.isEmpty || password.isEmpty) {
       _showSnackbar("Username atau kata sandi tidak boleh kosong!");
       return;
     }
-
     setState(() {
       _isLoading = true;
     });
-
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final success = await authProvider.login(username, password);
-
       if (!mounted) return;
-
       if (success) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -110,7 +101,6 @@ class LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 25),
 
-                  // Username TextField
                   TextField(
                     controller: _usernameController,
                     decoration: InputDecoration(
@@ -187,7 +177,6 @@ class LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
   @override
   void dispose() {
     _usernameController.dispose();

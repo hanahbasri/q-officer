@@ -6,10 +6,8 @@ import 'package:q_officer_barantin/services/auth_provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 
-
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
   SplashScreenState createState() => SplashScreenState();
 }
@@ -26,26 +24,14 @@ class SplashScreenState extends State<SplashScreen> {
   Future<void> _startSplashSequence() async {
     if (_navigated) return;
     _navigated = true;
-
-    if (kDebugMode) {
-      print('[SplashScreen] Memulai splash screen...');
-    }
-
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
       await Future.wait([
         Future.delayed(const Duration(seconds: 5)),
         authProvider.checkLoginStatus(),
       ]);
-
       if (!mounted) return;
-
       final isLoggedIn = authProvider.isLoggedIn;
-      if (kDebugMode) {
-        print('[SplashScreen] Status login: $isLoggedIn');
-      }
-
       Navigator.pushReplacementNamed(
         context,
         isLoggedIn ? '/home' : '/login',
@@ -74,22 +60,7 @@ class SplashScreenState extends State<SplashScreen> {
           width: 216,
           height: 216,
           fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            if (kDebugMode) {
-              print('[SplashScreen] Error dalam memuat gambar: $error');
-            }
-            return Container(
-              width: 216,
-              height: 216,
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.error, size: 50, color: Colors.red),
-            );
-          },
         ),
-
         Shimmer.fromColors(
           baseColor: Colors.transparent,
           highlightColor: Colors.white.withOpacity(0.3),
@@ -181,12 +152,6 @@ class SplashScreenState extends State<SplashScreen> {
                       width: 100,
                       height: 21,
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        if (kDebugMode) {
-                          print('[SplashScreen] Error dalam memuat logo Best Trust: $error');
-                        }
-                        return const Icon(Icons.error, size: 16, color: Colors.red);
-                      },
                     ),
                   ),
                 ),

@@ -388,8 +388,8 @@ class _HasilPeriksaCardState extends State<HasilPeriksaCard> {
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           side: BorderSide(color: syncButtonBorderColor),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), // Bentuk tombol
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // Padding tombol
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         ),
                       ),
                     ),

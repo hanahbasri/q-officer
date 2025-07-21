@@ -663,7 +663,6 @@ class SuratTugasTertundaState extends State<SuratTugasTertunda> {
                       const Divider(height: 1, color: Color(0xFFEEEEEE)),
                       const SizedBox(height: 12),
 
-                      // Peta dengan border
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
@@ -734,7 +733,6 @@ class SuratTugasTertundaState extends State<SuratTugasTertunda> {
                         ),
                       );
                     }
-                    // dari sini
                         : widget.hasActiveTask
                         ? () {
                       if (kDebugMode) print('🚫 Menampilkan dialog tidak tersedia karena hasActiveTask: ${widget.hasActiveTask}');

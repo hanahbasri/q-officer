@@ -23,7 +23,6 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), 'q-officer.db');
-
     return await openDatabase(
       path,
       version: 5,
@@ -48,10 +47,6 @@ class DatabaseHelper {
             FOREIGN KEY (id_pemeriksaan) REFERENCES Hasil_Pemeriksaan(id_pemeriksaan) ON DELETE CASCADE
           )
         ''');
-          if (kDebugMode) {
-            print(
-                'Tabel Dokumentasi_Periksa telah diupgrade ke skema baru (v5)');
-          }
         }
       },
     );
@@ -147,7 +142,6 @@ class DatabaseHelper {
         FOREIGN KEY (id_pemeriksaan) REFERENCES Hasil_Pemeriksaan(id_pemeriksaan) ON DELETE CASCADE
       );
     ''');
-
     await _createMasterTargetTemuanTable(db);
   }
 
@@ -175,9 +169,6 @@ class DatabaseHelper {
        last_sync_timestamp TEXT NOT NULL
      )
    ''');
-    if (kDebugMode) {
-      print('✅ Table Master_Target_Temuan created/ensured.');
-    }
   }
 
   Future<void> insertOrUpdateMasterTargetTemuan(String jenisKarantina, List<String> uraianList) async {
@@ -211,7 +202,6 @@ class DatabaseHelper {
         where: 'jenis_karantina = ?',
         whereArgs: [jenisKarantina],
       );
-
       if (maps.isNotEmpty) {final String uraianListJson = maps.first['uraian_list_json'] as String;
         if (uraianListJson.isNotEmpty) {
           final List<dynamic> decodedList = jsonDecode(uraianListJson);
@@ -368,8 +358,10 @@ class DatabaseHelper {
         if (kDebugMode &&
             localStatus.isNotEmpty &&
             localStatus != dataToInsert['status']) {
-          print(
+          if (kDebugMode) {
+            print(
               '🔄 DB_HELPER: Mengupdate status untuk ST ID: $idSuratTugas dari "$localStatus" menjadi "${dataToInsert['status']}"');
+          }
         }
       }
       dataToInsert['jenis_karantina'] = apiJenisKarantina.isNotEmpty ? apiJenisKarantina : localJenisKarantina;
@@ -435,16 +427,13 @@ class DatabaseHelper {
         }
         return await getData('Surat_Tugas');
       }
-
       await syncSuratTugasFromApi(nip);
-
       return await getData('Surat_Tugas');
     } catch (e) {
       if (kDebugMode) {
         print('❌ Error dalam getSuratTugasWithSync: $e');
         print('⚠️ Fallback ke data local saja');
       }
-      // Fallback ke data local jika sync gagal
       return await getData('Surat_Tugas');
     }
   }
@@ -452,11 +441,6 @@ class DatabaseHelper {
   Future<int> insert(String table, Map<String, dynamic> data) async {
     final db = await database;
     return await db.insert(table, data);
-  }
-
-  Future<List<Map<String, dynamic>>> getData(String table) async {
-    final db = await database;
-    return await db.query(table);
   }
 
   Future<int> update(String table, Map<String, dynamic> data, String whereClause, List<dynamic> whereArgs) async {
@@ -467,6 +451,11 @@ class DatabaseHelper {
   Future<int> delete(String table, String whereClause, List<dynamic> whereArgs) async {
     final db = await database;
     return await db.delete(table, where: whereClause, whereArgs: whereArgs);
+  }
+
+  Future<List<Map<String, dynamic>>> getData(String table) async {
+    final db = await database;
+    return await db.query(table);
   }
 
   Future<int> deleteImageFromDatabase(String imageId) async {
@@ -511,16 +500,6 @@ class DatabaseHelper {
       }
       return [];
     }
-  }
-
-  @Deprecated('Use getHasilPemeriksaanById instead')
-  Future<List<Map<String, dynamic>>> getPeriksaById(String idSuratTugas) async {
-    final db = await database;
-    return await db.query(
-      'Hasil_Pemeriksaan',
-      where: 'id_surat_tugas = ?',
-      whereArgs: [idSuratTugas],
-    );
   }
 
   Future<List<Map<String, dynamic>>> getImageFromDatabase(String idPemeriksaan) async {
@@ -645,7 +624,6 @@ class DatabaseHelper {
 
   Future<void> syncSingleData(String id, String userNip) async {
     try {
-      // Validasi input
       if (id.isEmpty || userNip.isEmpty) {
         if (kDebugMode) {
           print('❌ Parameter tidak valid - ID: "$id", NIP: "$userNip"');
@@ -756,14 +734,5 @@ class DatabaseHelper {
       where: 'id_surat_tugas = ?',
       whereArgs: [id],
     );
-  }
-
-  Future<void> deleteDatabaseFile() async {
-    final path = join(await getDatabasesPath(), 'app_database.db');
-    await deleteDatabase(path);
-    _database = null;
-    if (kDebugMode) {
-      print('Database berhasil dihapus');
-    }
   }
 }

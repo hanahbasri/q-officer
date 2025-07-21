@@ -5,16 +5,17 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:q_officer_barantin/surat_tugas/surat_tugas.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'services/notification_service.dart';
-import 'services/notif_history_screen.dart';
-import 'services/notification_provider.dart';
-import 'services/notif_detail_screen.dart';
-import 'services/auth_provider.dart';
+import '../services/notification_service.dart';
+import '../services/notif_history_screen.dart';
+import '../services/notification_provider.dart';
+import '../services/notif_detail_screen.dart';
+import '../services/auth_provider.dart';
 
-import 'login_screen.dart';
-import 'splash_screen.dart';
-import 'beranda/home_screen.dart';
+import '../main/login_screen.dart';
+import '../main/splash_screen.dart';
+import '../beranda/home_screen.dart';
 
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -32,12 +33,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await initFirebaseOnce();
   await initializeDateFormatting('id_ID', null);
-
-  // Setup background notification
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
   runApp(
     MultiProvider(
       providers: [
@@ -58,7 +57,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inisialisasi notifikasi setelah frame build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       NotificationService.navigatorKey = navigatorKey;
       NotificationService.initialize(context);
@@ -106,7 +104,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('id', 'ID'), // Tambahkan lokal Bahasa Indonesia
+        Locale('id', 'ID'),
       ],
       locale: const Locale('id', 'ID'),
       home: const SplashScreen(),

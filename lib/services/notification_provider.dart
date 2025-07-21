@@ -5,17 +5,11 @@ import 'dart:convert';
 class NotificationProvider with ChangeNotifier {
   final List<Map<String, dynamic>> _notifications = [];
   bool _initialized = false;
-
   NotificationProvider() {
     _loadNotifications();
   }
-
   List<Map<String, dynamic>> get notifications => List.from(_notifications);
-
-  // Mendapatkan jumlah notifikasi yang belum dibaca
   int get unreadCount => _notifications.where((n) => n['isRead'] == false).length;
-
-  // Mendapatkan notifikasi yang diurutkan berdasarkan waktu (terbaru dulu)
   List<Map<String, dynamic>> get sortedNotifications {
     final sorted = List<Map<String, dynamic>>.from(_notifications);
     sorted.sort((a, b) =>
@@ -23,24 +17,18 @@ class NotificationProvider with ChangeNotifier {
     );
     return sorted;
   }
-
-  // Menambahkan notifikasi baru dan menyimpannya secara persisten
   void addNotification(Map<String, dynamic> data) {
-    // Pastikan flag isRead diatur
     if (!data.containsKey('isRead')) {
       data['isRead'] = false;
     }
-
     if (!data.containsKey('timestamp')) {
       data['timestamp'] = DateTime.now().millisecondsSinceEpoch;
     }
-
-    _notifications.insert(0, Map<String, dynamic>.from(data)); // Menambahkan ke bagian atas daftar
-    _saveNotifications(); // Menyimpan notifikasi secara persisten
+    _notifications.insert(0, Map<String, dynamic>.from(data));
+    _saveNotifications();
     notifyListeners();
   }
 
-  // Menandai notifikasi sebagai sudah dibaca
   void markAsRead(int index) {
     if (index >= 0 && index < _notifications.length) {
       _notifications[index]['isRead'] = true;
@@ -49,7 +37,6 @@ class NotificationProvider with ChangeNotifier {
     }
   }
 
-  // Menandai semua notifikasi sebagai sudah dibaca
   void markAllAsRead() {
     for (var notification in _notifications) {
       notification['isRead'] = true;
@@ -58,7 +45,6 @@ class NotificationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Menghapus notifikasi
   void removeNotification(int index) {
     if (index >= 0 && index < _notifications.length) {
       _notifications.removeAt(index);
@@ -67,27 +53,22 @@ class NotificationProvider with ChangeNotifier {
     }
   }
 
-  // Menghapus semua notifikasi
   void clear() {
     _notifications.clear();
     _saveNotifications();
     notifyListeners();
   }
 
-  // Memuat notifikasi dari shared preferences
   Future<void> _loadNotifications() async {
     if (_initialized) return;
-
     try {
       final prefs = await SharedPreferences.getInstance();
       final String? notificationsJson = prefs.getString('notifications');
-
       if (notificationsJson != null) {
         final List<dynamic> decoded = json.decode(notificationsJson);
         _notifications.clear();
         _notifications.addAll(decoded.map((item) => Map<String, dynamic>.from(item)).toList());
       }
-
       _initialized = true;
       notifyListeners();
     } catch (e) {
@@ -95,7 +76,6 @@ class NotificationProvider with ChangeNotifier {
     }
   }
 
-  // Menyimpan notifikasi ke shared preferences
   Future<void> _saveNotifications() async {
     try {
       final prefs = await SharedPreferences.getInstance();

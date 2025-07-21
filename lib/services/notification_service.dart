@@ -8,62 +8,75 @@ import '../main.dart';
 import '../services/notification_provider.dart';
 import 'auth_provider.dart';
 
+class NotificationUtils {
+  static bool isSuratTugasNotification(Map<String, dynamic>? notifData) {
+    if (notifData == null) return false;
+
+    if (notifData.containsKey('type') && notifData['type'] == 'surat_tugas') {
+      return true;
+    }
+
+    if (notifData.containsKey('title')) {
+      String title = notifData['title'].toString().toLowerCase();
+      if (title.contains('surat tugas') || title.contains('pemeriksaan')) {
+        return true;
+      }
+    }
+
+    if (notifData.containsKey('notification') &&
+        notifData['notification'] is Map &&
+        notifData['notification'].containsKey('title')) {
+      String title = notifData['notification']['title'].toString().toLowerCase();
+      if (title.contains('surat tugas') || title.contains('pemeriksaan')) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+}
+
 class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotif =
   FlutterLocalNotificationsPlugin();
 
-  // Menyimpan referensi ke provider
   static late NotificationProvider _notificationProvider;
 
-  // Menyimpan referensi ke navigatorKey untuk navigasi global
   static GlobalKey<NavigatorState>? navigatorKey;
 
   static Future<void> initialize(BuildContext context) async {
-    // Save reference to provider
     _notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
-
-    // Ensure Firebase is ready
     await initFirebaseOnce();
 
-    // Request notification permission
     NotificationSettings settings = await _messaging.requestPermission();
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       if (kDebugMode) print("🔔 Notifikasi diizinkan");
 
-      // Get FCM token for backend
       String? fcmToken = await _messaging.getToken();
       if (kDebugMode && fcmToken != null) print("📲 FCM Token: $fcmToken");
 
-
-      // Initialize local notifications
       const androidInit = AndroidInitializationSettings('@drawable/logo_barantin');
       const initSettings = InitializationSettings(android: androidInit);
 
       await _localNotif.initialize(
         initSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
-          // Handle local notification tap
           _handleNotificationClick(response.payload);
         },
       );
 
-      // Listen for foreground messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         _handleIncomingMessage(message);
       });
 
-      // Listen for notification clicks (app background/terminated)
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        if (kDebugMode) print("📬 Notif diklik: ${message.data}");
         _handleNotificationClick(message.data);
       });
 
-      // Handle initial message (app opened from notification)
       FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
         if (message != null) {
-          if (kDebugMode) print("📬 App dibuka dari notifikasi (terminated state)");
           _handleNotificationClick(message.data);
         }
       });
@@ -89,7 +102,6 @@ class NotificationService {
     final title = notif?.title ?? message.data['title'] ?? 'Q-Officer';
     final body = notif?.body ?? message.data['body'] ?? '';
 
-    // Tambahkan ke provider notification history
     _notificationProvider.addNotification({
       'title': title,
       'body': body,
@@ -98,10 +110,9 @@ class NotificationService {
       'isRead': false,
     });
 
-    // Tampilkan notifikasi lokal
     const androidDetails = AndroidNotificationDetails(
-      'barantin_channel', // Channel ID
-      'Badan Karantina Indonesia Notifications', // Channel name
+      'barantin_channel',
+      'Badan Karantina Indonesia Notifications',
       channelDescription: 'Notifikasi Pemeriksaan Lapangan',
       importance: Importance.max,
       priority: Priority.high,
@@ -123,40 +134,14 @@ class NotificationService {
 
     Map<String, dynamic> notifData;
     if (payload is String) {
-      // Konversi string payload ke map (jika dari notifikasi lokal)
       notifData = _parseStringPayload(payload);
     } else if (payload is Map) {
       notifData = Map<String, dynamic>.from(payload);
     } else {
       return;
     }
-
-    if (kDebugMode) print("📬 Handling notification click with data: $notifData");
-
     _addNotificationToHistory(notifData);
     _navigateBasedOnNotificationType(notifData);
-
-    bool isSuratTugas = false;
-
-
-    if (notifData.containsKey('type') && notifData['type'] == 'surat_tugas') {
-      isSuratTugas = true;
-    }
-    else if (notifData.containsKey('title')) {
-      String title = notifData['title'].toString().toLowerCase();
-      if (title.contains('surat tugas') || title.contains('pemeriksaan')) {
-        isSuratTugas = true;
-      }
-    }
-
-    if (isSuratTugas) {
-      navigatorKey!.currentState!.pushNamed('/surat-tugas');
-    } else {
-      navigatorKey!.currentState!.pushNamed(
-        '/notif-detail',
-        arguments: notifData,
-      );
-    }
   }
 
   static void _addNotificationToHistory(Map<String, dynamic> notifData) {
@@ -205,7 +190,6 @@ class NotificationService {
     if (isSuratTugas) {
       navigatorKey!.currentState!.pushNamed('/surat-tugas');
     } else {
-      // Default to notification detail
       navigatorKey!.currentState!.pushNamed(
         '/notif-detail',
         arguments: notifData,
@@ -271,15 +255,16 @@ class NotificationService {
   }
 
   static Future<void> testSuratTugasNotification() async {
-    _notificationProvider.addNotification({
+    final Map<String, dynamic> suratTugasNotifData = {
       'title': 'Surat Tugas Baru 📢',
       'body': 'Anda memiliki surat tugas baru yang perlu ditindaklanjuti',
       'data': {'type': 'surat_tugas'},
       'timestamp': DateTime.now().millisecondsSinceEpoch,
       'isRead': false,
-    });
+    };
 
-    // Show local notification
+    _notificationProvider.addNotification(suratTugasNotifData);
+
     const androidDetails = AndroidNotificationDetails(
       'barantin_channel',
       'Badan Karantina Indonesia Notifications',
@@ -292,14 +277,13 @@ class NotificationService {
 
     await _localNotif.show(
       DateTime.now().millisecond,
-      'Surat Tugas Baru 📢',
-      'Anda memiliki surat tugas baru yang perlu ditindaklanjuti',
+      suratTugasNotifData['title'],
+      suratTugasNotifData['body'],
       notifDetails,
-      payload: json.encode({
-        'title': 'Surat Tugas Baru 📢',
-        'body': 'Anda memiliki surat tugas baru yang perlu ditindaklanjuti',
-        'type': 'surat_tugas'
-      }),
+      payload: json.encode(suratTugasNotifData['data']..addAll({ // Pastikan payload mencakup title dan body untuk parsing
+        'title': suratTugasNotifData['title'],
+        'body': suratTugasNotifData['body']
+      })),
     );
   }
 
@@ -311,5 +295,4 @@ class NotificationService {
       return {};
     }
   }
-
 }
