@@ -1,4 +1,3 @@
-**Q-Officer App 👮‍♂️📋**
 Selamat datang di Aplikasi Q-Officer! 👋 Aplikasi ini dirancang untuk membantu Petugas Karantina dalam menjalankan tugas-tugasnya dalam pemeriksaan kesehatan di lapangan agar lebih efisien.
 
 ## 🎯 Tentang Proyek Ini
