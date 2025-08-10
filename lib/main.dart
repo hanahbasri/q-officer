@@ -13,8 +13,8 @@ import '../services/notification_provider.dart';
 import '../services/notif_detail_screen.dart';
 import '../services/auth_provider.dart';
 
-import '../main/login_screen.dart';
-import '../main/splash_screen.dart';
+import '../screens/login_screen.dart';
+import '../screens/splash_screen.dart';
 import '../beranda/home_screen.dart';
 
 

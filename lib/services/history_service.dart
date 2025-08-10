@@ -15,6 +15,7 @@ class HistoryApiService {
     // Dummy response
     if (kDebugMode) {
       print('✅ (DUMMY) sendTaskStatusUpdate dipanggil untuk ST: $idSuratTugas dengan status: $status dan mengembalikan true.');
+      print('🔑 Using API token: $_apiToken');
     }
     return true;
   }
